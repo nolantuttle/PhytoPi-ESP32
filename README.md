@@ -5,7 +5,7 @@ PhytoPi is an IoT-based controlled environment system for supporting a plant thr
 
 Collects soil moisture, temperature, and humidity data using ESP32-attached sensors
 
-Transmits sensor data to a Raspberry Pi via Bluetooth Low Energy (BLE)
+Transmits sensor data to a Raspberry Pi via Wi-Fi
 
 Raspberry Pi aggregates, processes, and stores plant data
 
