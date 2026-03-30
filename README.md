@@ -74,3 +74,9 @@ Capacitive Soil Moisture Sensor: Determines soil water content and triggers wate
 Temperature and Humidity Sensor: Monitors ambient conditions affecting plant growth
 
 ESP32 Data Collection: ESP32 reads all sensors and transmits data via BLE to the Raspberry Pi
+
+# Read client messages
+pi: mosquitto_sub -h 127.0.0.1 -t 'gcu/swe410/dht11/#' -u mqttuser -P 'DanielPassword' -v
+pc: . ~/esp/v5.5.2/esp-idf/export.sh
+cd /home/danielg/Documents/Projects/School/PhytoPi_Esp32/PhytoPi-ESP32/PhytoPiESP32
+idf.py -p /dev/ttyUSB0 -b 115200 flash monitor
