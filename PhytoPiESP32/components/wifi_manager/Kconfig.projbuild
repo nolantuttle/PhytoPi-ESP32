@@ -1,0 +1,15 @@
+menu "WiFi Manager"
+
+    config WIFI_MANAGER_SSID
+        string "WiFi SSID"
+        default "DAN_G_21"
+        help
+            SSID of the access point to connect to.
+
+    config WIFI_MANAGER_PASSWORD
+        string "WiFi Password"
+        default "DanielPassword"
+        help
+            Password of the access point.
+
+endmenu

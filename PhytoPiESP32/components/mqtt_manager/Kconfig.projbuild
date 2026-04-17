@@ -1,0 +1,21 @@
+menu "MQTT Manager"
+
+    config MQTT_MANAGER_BROKER_URI
+        string "MQTT Broker URI"
+        default "mqtt://192.168.50.1:1883"
+        help
+            Full URI of the MQTT broker (e.g. mqtt://192.168.50.1:1883).
+
+    config MQTT_MANAGER_USERNAME
+        string "MQTT Username"
+        default "mqttuser"
+        help
+            Username for MQTT broker authentication.
+
+    config MQTT_MANAGER_PASSWORD
+        string "MQTT Password"
+        default "DanielPassword"
+        help
+            Password for MQTT broker authentication.
+
+endmenu
