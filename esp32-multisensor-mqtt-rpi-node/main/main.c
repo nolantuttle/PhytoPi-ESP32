@@ -20,8 +20,8 @@
 #include "light_sensor_wrapper.h"
 #include "soil_sensor_wrapper.h"
 
-#define WIFI_SSID "POD"
-#define WIFI_PASSWORD "crispytulip468"
+#define WIFI_SSID "nolan_wifi"
+#define WIFI_PASSWORD "rootroot"
 
 #define MQTT_BROKER_URI "mqtt://192.168.1.178:1883"
 #define MQTT_USERNAME "nolan"
