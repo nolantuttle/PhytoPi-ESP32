@@ -1,82 +1,117 @@
 # PhytoPi-ESP32
-PhytoPi is an IoT-based controlled environment system for supporting a plant throughout its entire growth cycle with minimal human intervention. This repository tracks our version of this project for Software Engineering 2, with the addition of an ESP32-based microcontroller.
 
-# Features
+PhytoPi is an IoT-based controlled environment system for supporting a plant throughout its entire growth cycle with minimal human intervention. This repository tracks the SWE-410 Milestone 5 implementation, integrating an ESP32-S3 as the sensor and telemetry node publishing live data to a Raspberry Pi over MQTT.
 
-Collects soil moisture, temperature, and humidity data using ESP32-attached sensors
+---
 
-Transmits sensor data to a Raspberry Pi via Wi-Fi
+## Features
 
-Raspberry Pi aggregates, processes, and stores plant data
+- Reads soil moisture, ambient temperature, and light level from three analog sensors via ESP32-S3 ADC
+- Publishes live JSON telemetry to a Raspberry Pi Mosquitto MQTT broker over Wi-Fi every 5 seconds
+- Raspberry Pi aggregates and visualizes data on a live Grafana dashboard
+- Modular component structure — each sensor has its own wrapper with a consistent Init/Read API
+- Event-driven Wi-Fi reconnect with automatic MQTT re-connection on drop
 
-Data is visualized in a web-based dashboard
+---
 
-Modular structure allows adding additional sensors in the future
+## Project Structure
 
-# Project Structure
+```
+PhytoPi-ESP32/
+├── esp32-multisensor-mqtt-rpi-node/
+│   ├── CMakeLists.txt
+│   ├── main/
+│   │   ├── CMakeLists.txt
+│   │   └── main.c
+│   └── components/
+│       ├── wifi_manager/
+│       │   ├── CMakeLists.txt
+│       │   ├── wifi_manager.h
+│       │   └── wifi_manager.c
+│       ├── mqtt_manager/
+│       │   ├── CMakeLists.txt
+│       │   ├── mqtt_manager.h
+│       │   └── mqtt_manager.c
+│       ├── thermistor_wrapper/
+│       │   ├── CMakeLists.txt
+│       │   ├── thermistor_wrapper.h
+│       │   └── thermistor_wrapper.c
+│       ├── light_sensor_wrapper/
+│       │   ├── CMakeLists.txt
+│       │   ├── light_sensor_wrapper.h
+│       │   └── light_sensor_wrapper.c
+│       └── soil_sensor_wrapper/
+│           ├── CMakeLists.txt
+│           ├── soil_sensor_wrapper.h
+│           └── soil_sensor_wrapper.c
+└── docs/
+    ├── milestone5_report.pdf
+    └── screenshots/
+```
 
-    ├── PhytoPiESP32/
-    │   ├── CMakeLists.txt
-    │   ├── main/
-    │   │   └── CMakeLists.txt
-    │   └── main.c
-    ├── components/
-    │   ├── wifi_manager/
-    │   │   ├── CMakeLists.txt
-    │   │   ├── include/
-    │   │   ├── wifi_manager.hty
-    │   │   └── wifi_manager.c
-    │   ├── mqtt_client/
-    │   │   ├── MakeLists.txt
-    │   │   ├── include/
-    │   │   ├── mqtt_client.h
-    │   │   └── mqtt_client.c
-    │   ├── bme680_driver/
-    │   │   ├── CMakeLists.txt
-    │   │   ├── include/
-    │   │   ├── bme680_driver.h
-    │   │   └── bme680_driver.c
-    │   ├── soil_moisture/
-    │   │   ├── CMakeLists.txt
-    │   │   ├── include/
-    │   │   ├── soil_moisture.h
-    │   │   └── soil_moisture.c
-    │   ├── liquid_level/
-    │   │   ├── CMakeLists.txt
-    │   │   ├── include/
-    │   │   ├── liquid_level.h
-    │   │   └── liquid_level.c
-    │   ├── data_formatter/
-    │   │   ├── CMakeLists.txt
-    │   │   ├── include/
-    │   │   ├── data_formatter.h
-    │   │   └── data_formatter.c
-    │   └── docs/
-    │       ├── flowchart.png
-    │       └── uml_diagram.png
-    └── README.md
+---
 
+## Sensors
 
-# Version Control and Workflow
+| Sensor | GPIO | ADC Channel | Output |
+|---|---|---|---|
+| NTC Thermistor (10kΩ, B=3950) | GPIO5 | ADC1 CH4 | °C |
+| Photoresistor (light sensor) | GPIO2 | ADC1 CH1 | 0–100% |
+| Capacitive soil moisture | GPIO1 | ADC1 CH0 | 0–100% |
 
-Development uses Git and GitHub for version control
+All three sensors share a single `adc_oneshot_unit_handle_t` created in `app_main` and passed to each wrapper on init.
 
-Feature branches are used for new functionality, bug fixes, and experimental changes
+---
 
-Pull requests are created for merging changes into main after review
+## MQTT
 
-Releases are tagged using Semantic Versioning (MAJOR.MINOR.PATCH)
+**Broker:** Mosquitto on Raspberry Pi, port 1883, authenticated
 
-# System Sensors
+**Topic:** `gcu/lab/env/telemetry`
 
-Capacitive Soil Moisture Sensor: Determines soil water content and triggers watering decisions
+**Payload (every 5 seconds):**
+```json
+{"device":"esp32-01","temperature_c":24.3,"light_pct":61.2,"soil_moisture_pct":45.0}
+```
 
-Temperature and Humidity Sensor: Monitors ambient conditions affecting plant growth
+**Subscribe (on Pi):**
+```bash
+mosquitto_sub -h 127.0.0.1 -t 'gcu/lab/env/telemetry' -u nolan -P rootroot -v
+```
 
-ESP32 Data Collection: ESP32 reads all sensors and transmits data via BLE to the Raspberry Pi
+---
 
-# Read client messages
-pi: mosquitto_sub -h 127.0.0.1 -t 'gcu/swe410/dht11/#' -u mqttuser -P 'DanielPassword' -v
-pc: . ~/esp/v5.5.2/esp-idf/export.sh
-cd /home/danielg/Documents/Projects/School/PhytoPi_Esp32/PhytoPi-ESP32/PhytoPiESP32
-idf.py -p /dev/ttyUSB0 -b 115200 flash monitor
+## Build / Flash / Run
+
+**Prerequisites:** ESP-IDF v5.2.6, target ESP32-S3
+
+```bash
+cd esp32-multisensor-mqtt-rpi-node
+idf.py set-target esp32s3
+idf.py build
+idf.py -p COM4 flash monitor        # Windows
+idf.py -p /dev/ttyUSB0 flash monitor  # Linux
+```
+
+Update credentials in `main/main.c` before flashing:
+```c
+#define WIFI_SSID       "your_ssid"
+#define WIFI_PASSWORD   "your_password"
+#define MQTT_BROKER_URI "mqtt://<pi-ip>:1883"
+#define MQTT_USERNAME   "nolan"
+#define MQTT_TOPIC      "gcu/lab/env/telemetry"
+```
+
+---
+
+## Raspberry Pi Setup
+
+```bash
+# Start broker and dashboard
+sudo systemctl start mosquitto
+sudo systemctl start grafana-server
+```
+
+Grafana dashboard accessible at `http://<pi-ip>:3000` (default login: admin / admin).
+
+---
