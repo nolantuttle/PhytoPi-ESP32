@@ -1,0 +1,12 @@
+{
+    "idf.currentSetup": "C:\\esp\\v5.2.6\\esp-idf",
+    "idf.flashType": "UART",
+    "idf.portWin": "COM7",
+    "idf.monitorPort": "COM7",
+    "idf.openOcdConfigs": [
+        "board/esp32s3-builtin.cfg"
+    ],
+    "idf.customExtraVars": {
+        "IDF_TARGET": "esp32s3"
+    }
+}
